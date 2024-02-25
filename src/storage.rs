@@ -2,7 +2,6 @@
 #![allow(dead_code)]
 
 pub mod storage_client {
-
     use crate::bucket::bucket::*;
     use crate::bucket_api::bucket_api::BucketApi;
     use crate::bucket_error::bucket_error::BucketError;
@@ -121,37 +120,42 @@ pub mod storage_client {
             }
         }
 
-        //TODO put doesn't add body for some reason
-        // async fn update_bucket_async(&self, bucket_id:&str, update_request:BucketConfig) -> Result<(), BucketError> {
-        //     let url = format!("{}/{}/{}/bucket/{}", self.superbase_url, STORAGE_API_URL, STORAGE_API_VERSION, bucket_id);
-        //     let serialized: String = serde_json::to_string(&update_request).unwrap();
-        //     println!("{}", serialized);
+        async fn update_bucket_async(&self, bucket_id:&str, update_request:BucketConfig) -> Result<(), BucketError> {
+            let url = format!("{}/{}/{}/bucket/{}", self.superbase_url, STORAGE_API_URL, STORAGE_API_VERSION, bucket_id);
+            let update_request_json = serde_json::to_string(&update_request).unwrap();
 
-        //     let response = reqwest::Client::new()
-        //         .put(&url)
-        //         .header("Authorization", &self.superbase_key)
-        //         .body("update_request")
-        //         .send()
-        //         .await;
+            let method = reqwest::Method::PUT;
+            let builder = reqwest::Client::new()
+                .request(method, &url)
+                .header("Authorization", &self.superbase_key)
+                .header("Content-Type", "application/json")
+                .body(update_request_json)
+                .build();
+            
+            let request = builder.unwrap();
 
-        //     match response {
-        //         Ok(response) => {
-        //             if response.status().is_success() {
-        //                 Ok(())
-        //             } else {
-        //                 let body = response.text().await.unwrap();
-        //                 let bucket_error: BucketError = serde_json::from_str(&body).unwrap();
-        //                 Err(bucket_error)
-        //             }
-        //         }
-        //         Err(e) => {
-        //             let status_code = "500".to_string();
-        //             let error = "Internal Server Error".to_string();
-        //             let message = e.to_string();
-        //             Err(BucketError::new(status_code, error, message))
-        //         }
-        //     }
-        // }
+            let response = reqwest::Client::new()
+                .execute(request)
+                .await;
+
+            match response {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        Ok(())
+                    } else {
+                        let body = response.text().await.unwrap();
+                        let bucket_error: BucketError = serde_json::from_str(&body).unwrap();
+                        Err(bucket_error)
+                    }
+                }
+                Err(e) => {
+                    let status_code = "500".to_string();
+                    let error = "Internal Server Error".to_string();
+                    let message = e.to_string();
+                    Err(BucketError::new(status_code, error, message))
+                }
+            }
+        }
 
         async fn delete_bucket_async(&self, bucket_id: &str) -> Result<(), BucketError> {
             let url = format!(
