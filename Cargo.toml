@@ -3,6 +3,10 @@ name = "storage-rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["Ryan Spears"]
+description = "A api client for Supabase Storage"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/cautoio/storage-rs"
 
 
 [dependencies]
